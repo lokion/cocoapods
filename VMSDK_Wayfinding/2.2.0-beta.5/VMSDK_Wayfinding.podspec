@@ -10,7 +10,7 @@ s.version='v2.2.0-beta.3'
     :file => 'LICENSE.txt'
   }
   s.author = 'dsmith@lokion.com'
-   s.source            = { :http => "https://vmsdk-releases.s3.us-east-2.amazonaws.com/EVAL/iOS/#{s.version}/pods/#{s.name}.zip" }
+   s.source            = { :http => "https://github.com/lokion/cocoapods/releases/download/#{s.version}/#{s.name}.zip" }
 
   s.platforms = {
     :ios => '13.0'
