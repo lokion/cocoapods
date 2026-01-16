@@ -2,9 +2,10 @@
 
 # VMSDK Version Update Script
 # Updates all VMSDK podspec files to a new version
-# Usage: ./update-version.sh <new_version> [source_version]
+# Usage: ./update-version.sh [--force] <new_version> [source_version]
 # Example: ./update-version.sh 2.2.2
 # Example: ./update-version.sh 2.2.2 2.2.1
+# Example: ./update-version.sh --force 2.2.2 2.2.1
 
 set -e  # Exit on error
 
@@ -67,11 +68,37 @@ find_latest_version() {
     echo "$latest_version"
 }
 
+# Parse arguments
+FORCE=false
+POSITIONAL_ARGS=()
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --force|-f)
+            FORCE=true
+            shift
+            ;;
+        -*)
+            print_error "Unknown option: $1"
+            echo "Usage: $0 [--force] <new_version> [source_version]"
+            exit 1
+            ;;
+        *)
+            POSITIONAL_ARGS+=("$1")
+            shift
+            ;;
+    esac
+done
+
+# Restore positional arguments
+set -- "${POSITIONAL_ARGS[@]}"
+
 # Check arguments
 if [ $# -lt 1 ]; then
-    echo "Usage: $0 <new_version> [source_version]"
+    echo "Usage: $0 [--force] <new_version> [source_version]"
     echo "Example: $0 2.2.2"
     echo "Example: $0 2.2.2 2.2.1"
+    echo "Example: $0 --force 2.2.2 2.2.1"
     exit 1
 fi
 
@@ -88,6 +115,9 @@ echo "======================================"
 echo "VMSDK Version Update Script"
 echo "======================================"
 echo "Target version: $NEW_VERSION"
+if [ "$FORCE" = true ]; then
+    print_info "Force mode enabled - existing directories will be overwritten"
+fi
 echo ""
 
 # Auto-detect source version if not provided
@@ -106,9 +136,14 @@ echo ""
 # Check if new version already exists
 for POD in "${PODS[@]}"; do
     if [ -d "$POD/$NEW_VERSION" ]; then
-        print_error "Version $NEW_VERSION already exists for $POD"
-        echo "Please remove existing directories or choose a different version."
-        exit 1
+        if [ "$FORCE" = true ]; then
+            print_info "Removing existing directory: $POD/$NEW_VERSION"
+            rm -rf "$POD/$NEW_VERSION"
+        else
+            print_error "Version $NEW_VERSION already exists for $POD"
+            echo "Please remove existing directories, choose a different version, or use --force to overwrite."
+            exit 1
+        fi
     fi
 done
 
